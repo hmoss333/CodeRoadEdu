@@ -45,16 +45,13 @@ public class ChallenegeMenu : MonoBehaviour {
         ToggleHints();
 
         if (returnFromChallenge)
-        {
             SetChallengeScreen();
-            returnFromChallenge = false;
-        }
     }
 	
 	// Update is called once per frame
 	void Update () {
-		
-	}
+
+    }
 
     void TurnOffAvatars(GameObject[] avatarList)
     {
@@ -248,6 +245,7 @@ public class ChallenegeMenu : MonoBehaviour {
 
     public void ChallengeBack()
     {
+        returnFromChallenge = false;
         characterSelectMenu.SetActive(false);
         //challengeMenu.alpha = 0f;
         challengeMenu.SetActive(false);

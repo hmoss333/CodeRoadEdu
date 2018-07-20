@@ -17,6 +17,8 @@ public class RedeemCode : MonoBehaviour {
 
     public static bool verified = false;
 
+    public ChallenegeMenu cm;
+
     // Use this for initialization
     void Start () {
         background = GameObject.FindObjectOfType<UITexture>();
@@ -68,9 +70,17 @@ public class RedeemCode : MonoBehaviour {
     void Verified()
     {
         redeemPanel.alpha = 0f;
-        frontPanel.alpha = 1f;
-        background.mainTexture = Resources.Load("coderoad_opening") as Texture; //update file name for respective main menu background
         verified = true;
+
+        if (!ChallenegeMenu.returnFromChallenge)
+        {
+            frontPanel.alpha = 1f;
+            background.mainTexture = Resources.Load("coderoad_opening") as Texture; //update file name for respective main menu background
+        }
+        else
+        {
+            cm.SetChallengeScreen();
+        }
     }
 
     public void ErrorMessageButton()
