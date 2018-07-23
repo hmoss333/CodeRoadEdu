@@ -50,8 +50,8 @@ public class ChallenegeMenu : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
-    }
+		
+	}
 
     void TurnOffAvatars(GameObject[] avatarList)
     {

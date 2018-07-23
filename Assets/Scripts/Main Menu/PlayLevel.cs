@@ -90,9 +90,10 @@ public class PlayLevel : MonoBehaviour {
     }
 
 	public void OnClick() {
-		if (on && RedeemCode.verified) {
+        if (on && RedeemCode.verified)
+        {
             MiniGame.isMainMenuGame = false;
-			frontPanel.alpha = 0;
+            frontPanel.alpha = 0;
 
             if (!loading)
             {
@@ -100,7 +101,7 @@ public class PlayLevel : MonoBehaviour {
                 loading = true;
             }
         }
-	}
+    }
 	
 	// Update is called once per frame
 	void Update () {

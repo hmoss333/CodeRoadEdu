@@ -20,7 +20,8 @@ public class RedeemCode : MonoBehaviour {
     public ChallenegeMenu cm;
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
         background = GameObject.FindObjectOfType<UITexture>();
         background.mainTexture = Resources.Load("background_st") as Texture;
 
@@ -33,12 +34,13 @@ public class RedeemCode : MonoBehaviour {
         //PlayerPrefs.SetString("verificationCode", ""); //for testing
         if (SimplifyCode(PlayerPrefs.GetString("verificationCode")).Contains(productCode))
             Verified();
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    }
 
-	}
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 
     public void TestCode()
     {
