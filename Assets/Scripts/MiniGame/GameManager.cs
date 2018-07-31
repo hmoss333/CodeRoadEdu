@@ -67,9 +67,74 @@ public class GameManager : MonoBehaviour {
 
     Light directionalLight;
 
+    private bool key3Press = false;
+    private bool key2Press = false;
+    private bool key1Press = false;
+    private bool keyspacePress = false;
+    private bool keyenterPress = false;
+
+    private bool objectApp = false;
+
+    private Event e;
+
+#if UNITY_IOS
+	void iCadeStateCallback(int state)
+	{
+		print("iCade state change. Current state="+state);
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button up event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonUpCallback(char button)
+	{
+		print("Button up event. Button " + button + " up");
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button down event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonDownCallback(char button)
+	{
+		print("Button down event. Button " + button + " down");
+		if (button == 'w') {
+			key1Press = true;
+		} 
+		if (button == 'x') {
+			key2Press = true;
+		}
+		if (button == 'd') {
+			key3Press = true;
+		}
+		if (button == 'a') {
+			keyspacePress = true;
+		}
+		if (button == 'y') {
+			keyenterPress = true;
+		}
+		objectApp = true;
+	}
+
+	void iCadeKeyPressedCallback(int i)
+	{
+		
+	}
+#endif
+
     // Use this for initialization
     void Start()
     {
+#if UNITY_IOS
+		iCadeInput.Activate(true);
+		
+		//Register some callbacks
+		iCadeInput.AddICadeEventCallback(iCadeStateCallback);
+		iCadeInput.AddICadeButtonUpCallback(iCadeButtonUpCallback);
+		iCadeInput.AddICadeButtonDownCallback(iCadeButtonDownCallback);
+#endif
+
         playing = false;
         gm = GetComponent<GameManager>();
         moveBackground = GameObject.Find("MoveBackground");
@@ -113,13 +178,17 @@ public class GameManager : MonoBehaviour {
      
         buttonCount = 0;
         scanCount = 0;
-        if (PlayerPrefs.GetInt("Scan") == 1 && !MiniGame.tutorialMode) { StartCoroutine(scanner()); }
+        if (PlayerPrefs.GetInt("Scan") == 1)// || MiniGame.tutorialMode)
+        {
+            StartCoroutine(scanner());
+        }
         directionalLight = GameObject.FindObjectOfType<Light>();
         //GameStatusEventHandler.gameWasStarted("freeplay");
 
         SelectAvatar(avatars);
         UpdateInstructionText(player);
-        SetBackgroundMusic(avatars, backgroundMusic, musicController);
+        if (PlayerPrefs.GetInt("voice") == 0)
+            SetBackgroundMusic(avatars, backgroundMusic, musicController);
     }
 
     public static void SelectAvatar(Avatars avatar)
@@ -227,15 +296,52 @@ public class GameManager : MonoBehaviour {
             loadedCode = false;
         }
 
-        if (Input.anyKeyDown)
+        //Zumo Input
+        if (Input.GetKeyDown("1") == true)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
+            key1Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("2") == true)
+        {
+            key2Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("3") == true)
+        {
+            key3Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("space") == true)
+        {
+            keyspacePress = true;
+            objectApp = true;
+        }
+        if (e != null)
+        {
+            if (e.keyCode.ToString() == "10" && e.type == EventType.keyDown)
+            {
+                keyenterPress = true;
+                objectApp = true;
+            }
+        }
+
+        if (key1Press || key2Press || key3Press || keyspacePress || keyenterPress || objectApp) //Input.anyKeyDown)
+        {
+            //if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
 
             if (tryAgainCanvas.active) { nextLevel(); }
-            else if ((PlayerPrefs.GetInt("Scan") == 1 || MiniGame.tutorialMode) && !playing)
+            else if ((PlayerPrefs.GetInt("Scan") == 1 || MiniGame.tutorialMode))// && !playing)
             {
                 checkScanPosition();
             }
+
+            key1Press = false;
+            key2Press = false;
+            key3Press = false;
+            keyspacePress = false;
+            keyenterPress = false;
+            objectApp = false;
         }
 
         if (move.text.Contains("Forward"))
@@ -401,18 +507,25 @@ public class GameManager : MonoBehaviour {
         playSound(8);
         yield return new WaitForSeconds(1);
         facingRight = true;
-        if (!loopState)
+        //if (!loopState)
+        //{
+        //    movementLengthCollection = 0;
+        //    player.transform.localScale = new Vector3(2, 2, 2);
+        //    player.transform.rotation = Quaternion.Euler(0, 90, 0);
+        //    player.transform.position = new Vector3(-2.64f, -3.72f, 0.28f);
+        //    StartCoroutine(playingMovement());
+        //}
+
+        if (loopState)
         {
-            movementLengthCollection = 0;
-            player.transform.localScale = new Vector3(2, 2, 2);
-            player.transform.rotation = Quaternion.Euler(0, 90, 0);
-            player.transform.position = new Vector3(-2.64f, -3.72f, 0.28f);
-            StartCoroutine(playingMovement());
-        }
-        else {
-            //move.text = "Must Close All Loops To Play";
             endLoop();
         }
+
+        movementLengthCollection = 0;
+        player.transform.localScale = new Vector3(2, 2, 2);
+        player.transform.rotation = Quaternion.Euler(0, 90, 0);
+        player.transform.position = new Vector3(-2.64f, -3.72f, 0.28f);
+        StartCoroutine(playingMovement());
     }
 
     public void playAgain()
@@ -480,7 +593,7 @@ public class GameManager : MonoBehaviour {
 
     void playMoveName(string move)
     {
-        if (PlayerPrefs.GetInt("Voice") == 1)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             if (move.Contains("Grow")) { GetComponent<AudioSource>().clip = mySounds[5]; }
             if (move.Contains("Spin")) { GetComponent<AudioSource>().clip = mySounds[11]; }
@@ -500,9 +613,7 @@ public class GameManager : MonoBehaviour {
     {
         for (int i = 0; i < movement.Count; i++)
         {
-            if(movement[i].Contains("Begin Loop")) { 
-               /*i++;*/ saveStartLocation = i;
-            }
+            if(movement[i].Contains("Begin Loop")) { /*i++;*/ saveStartLocation = i; }
             Debug.Log("startLocation: " + saveStartLocation);
           
             if (movement[i].Contains("End Loop")) {
@@ -536,6 +647,7 @@ public class GameManager : MonoBehaviour {
                 AnimatePlayer.jump = true;
                 StartCoroutine(jump());
             }
+
             insertFormat(i);
 
             move.text = movement[i];
@@ -565,7 +677,7 @@ public class GameManager : MonoBehaviour {
                 player.transform.eulerAngles = new Vector3(0, 90, 0);
                 facingRight = true;
             }
-            else if(facingRight && turned)
+            else if (facingRight && turned)
             {
                 player.transform.eulerAngles = new Vector3(0, 270, 0);
                 facingRight = false;
@@ -594,7 +706,7 @@ public class GameManager : MonoBehaviour {
 
     void playSound(int num)
     {
-        if (PlayerPrefs.GetInt("Voice") == 1)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             GetComponent<AudioSource>().clip = mySounds[num];
             GetComponent<AudioSource>().Play();
@@ -614,6 +726,7 @@ public class GameManager : MonoBehaviour {
         Destroy(player);
 
         //playSound(7);
+        GetComponent<AudioSource>().Stop();
         canvas.SetActive(false);
         tryAgainCanvas.SetActive(false);
         background.SetActive(false);
@@ -632,6 +745,7 @@ public class GameManager : MonoBehaviour {
     {
         Destroy(player);
         //narration.Stop();
+        GetComponent<AudioSource>().Stop();
         MiniGame.UnloadScene(MiniGame.Level.FreePlay);
         MiniGame.LoadScene(MiniGame.Level.Level1);
     }

@@ -65,9 +65,74 @@ public class Tutorial : MonoBehaviour
 
     Light directionalLight;
 
+    private bool key3Press = false;
+    private bool key2Press = false;
+    private bool key1Press = false;
+    private bool keyspacePress = false;
+    private bool keyenterPress = false;
+
+    private bool objectApp = false;
+
+    private Event e;
+
+#if UNITY_IOS
+	void iCadeStateCallback(int state)
+	{
+		print("iCade state change. Current state="+state);
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button up event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonUpCallback(char button)
+	{
+		print("Button up event. Button " + button + " up");
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button down event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonDownCallback(char button)
+	{
+		print("Button down event. Button " + button + " down");
+		if (button == 'w') {
+			key1Press = true;
+		} 
+		if (button == 'x') {
+			key2Press = true;
+		}
+		if (button == 'd') {
+			key3Press = true;
+		}
+		if (button == 'a') {
+			keyspacePress = true;
+		}
+		if (button == 'y') {
+			keyenterPress = true;
+		}
+		objectApp = true;
+	}
+
+	void iCadeKeyPressedCallback(int i)
+	{
+		
+	}
+#endif
+
     // Use this for initialization
     void Start()
     {
+#if UNITY_IOS
+		iCadeInput.Activate(true);
+		
+		//Register some callbacks
+		iCadeInput.AddICadeEventCallback(iCadeStateCallback);
+		iCadeInput.AddICadeButtonUpCallback(iCadeButtonUpCallback);
+		iCadeInput.AddICadeButtonDownCallback(iCadeButtonDownCallback);
+#endif
+
         playing = false;
         moveBackground = GameObject.Find("MoveBackground");
         switch(PlayerPrefs.GetInt("fontSizeIndex"))
@@ -182,18 +247,54 @@ public class Tutorial : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.Log(tutorialCount);
-        if (Input.anyKeyDown)
+        if (Input.GetKeyDown("1") == true)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
+            key1Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("2") == true)
+        {
+            key2Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("3") == true)
+        {
+            key3Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("space") == true)
+        {
+            keyspacePress = true;
+            objectApp = true;
+        }
+        if (e != null)
+        {
+            if (e.keyCode.ToString() == "10" && e.type == EventType.keyDown)
+            {
+                keyenterPress = true;
+                objectApp = true;
+            }
+        }
 
-            if (winCanvas.active) { mainMenu(); }
-            else if (tutorialCanvas.active) { TutorialOn(); }
-            else if (tryAgainCanvas.active) { clearList(); }
-            else if ((PlayerPrefs.GetInt("Scan") == 1 || MiniGame.tutorialMode))// && !playing)
+        //Debug.Log(tutorialCount);
+        if (key1Press || key2Press || key3Press || keyspacePress || keyenterPress || objectApp) //Input.anyKeyDown)
+        {
+            //if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
+
+            if (winCanvas.activeSelf) { mainMenu(); }
+            else if (tutorialCanvas.activeSelf) { TutorialOn(); }
+            else if (tryAgainCanvas.activeSelf) { clearList(); }
+            else if ((PlayerPrefs.GetInt("Scan") == 1 || MiniGame.tutorialMode) || MiniGame.isMainMenuGame)// && !playing)
             {
                 checkScanPosition();
             }
+
+            key1Press = false;
+            key2Press = false;
+            key3Press = false;
+            keyspacePress = false;
+            keyenterPress = false;
+            objectApp = false;
         }
 
 
@@ -512,7 +613,7 @@ public class Tutorial : MonoBehaviour
 
     void playMoveName(string move)
     {
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             if (move.Contains("Grow")) { GetComponent<AudioSource>().clip = mySounds[5]; }
             if (move.Contains("Spin")) { GetComponent<AudioSource>().clip = mySounds[11]; }
@@ -666,10 +767,10 @@ public class Tutorial : MonoBehaviour
     {
         canvas.SetActive(false);
         winCanvas.SetActive(true);
-        GetComponent<AudioSource>().Stop();
+        //GetComponent<AudioSource>().Stop();
         //GetComponent<AudioSource>().clip = winSound[UnityEngine.Random.Range(0, winSound.Length)];
         playSound(20);
-        GetComponent<AudioSource>().Play();
+        //GetComponent<AudioSource>().Play();
         player.transform.eulerAngles = new Vector3(0, 180, 0);
         AnimatePlayer.win = true;
         AnimateFriend.win = true;
@@ -678,7 +779,7 @@ public class Tutorial : MonoBehaviour
     void displayErrorMessage()
     {
         //showMoves.text = "Good try! Press Clear To Try Again";
-        //if (PlayerPrefs.GetInt("Voice") == 0)
+        //if (PlayerPrefs.GetInt("voice") == 0)
         //{
         //    incorrectVoiceOver.Play();
         //    if (narration.isPlaying)
@@ -778,8 +879,9 @@ public class Tutorial : MonoBehaviour
 
     void playSound(int num)
     {
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
+            GetComponent<AudioSource>().Stop();
             GetComponent<AudioSource>().clip = mySounds[num];
             GetComponent<AudioSource>().Play();
         }
@@ -793,20 +895,21 @@ public class Tutorial : MonoBehaviour
     IEnumerator mainMenuStart()
     {
         //playSound(7);
+        GetComponent<AudioSource>().Stop();
         canvas.SetActive(false);
-        //directionalLight.gameObject.SetActive(false);
+
         if (!MiniGame.isMainMenuGame)
         {
+            winCanvas.SetActive(false);
             tryAgainCanvas.SetActive(false);
             background.SetActive(false);
-            winCanvas.SetActive(false);
-            //LoadingScreen.LoadScene("Empty");
+
             GetComponent<Camera>().enabled = false;
             if (!SceneManager.GetSceneByName("LoadingScreen").isLoaded)
                 SceneManager.LoadScene("LoadingScreen", LoadSceneMode.Additive);
             directionalLight.gameObject.SetActive(false);
             LoadingScreen.LoadScene("Empty");
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(1.25f);
             story.EndMiniGame();
             MiniGame.UnloadScene(MiniGame.currentLevel);
             SceneManager.UnloadSceneAsync("MiniGame");
@@ -819,7 +922,7 @@ public class Tutorial : MonoBehaviour
             if (!SceneManager.GetSceneByName("LoadingScreen").isLoaded)
                 SceneManager.LoadScene("LoadingScreen", LoadSceneMode.Additive);
             directionalLight.gameObject.SetActive(false);
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(1.25f);
             SceneManager.LoadSceneAsync("MenuScreen");
         }
     }

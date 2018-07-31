@@ -65,9 +65,74 @@ public class Abilities2 : MonoBehaviour
 
     Light directionalLight;
 
+    private bool key3Press = false;
+    private bool key2Press = false;
+    private bool key1Press = false;
+    private bool keyspacePress = false;
+    private bool keyenterPress = false;
+
+    private bool objectApp = false;
+
+    private Event e;
+
+#if UNITY_IOS
+	void iCadeStateCallback(int state)
+	{
+		print("iCade state change. Current state="+state);
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button up event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonUpCallback(char button)
+	{
+		print("Button up event. Button " + button + " up");
+	}
+	
+	/// <summary>
+	/// This will be called whenever there's a button down event in iCade. It will get called for buttons and axis, since axis movement also translates into key presses
+	/// </summary>
+	/// <param name="button"></param>
+	void iCadeButtonDownCallback(char button)
+	{
+		print("Button down event. Button " + button + " down");
+		if (button == 'w') {
+			key1Press = true;
+		} 
+		if (button == 'x') {
+			key2Press = true;
+		}
+		if (button == 'd') {
+			key3Press = true;
+		}
+		if (button == 'a') {
+			keyspacePress = true;
+		}
+		if (button == 'y') {
+			keyenterPress = true;
+		}
+		objectApp = true;
+	}
+
+	void iCadeKeyPressedCallback(int i)
+	{
+		
+	}
+#endif
+
     // Use this for initialization
     void Start()
     {
+#if UNITY_IOS
+		iCadeInput.Activate(true);
+		
+		//Register some callbacks
+		iCadeInput.AddICadeEventCallback(iCadeStateCallback);
+		iCadeInput.AddICadeButtonUpCallback(iCadeButtonUpCallback);
+		iCadeInput.AddICadeButtonDownCallback(iCadeButtonDownCallback);
+#endif
+
         playing = false;
         GameObject moveBackground = GameObject.Find("MoveBackground");
         //GameObject helpBackground = GameObject.Find("HelpBackground");
@@ -120,7 +185,7 @@ public class Abilities2 : MonoBehaviour
 
         buttonCount = 0;
         if (PlayerPrefs.GetInt("Scan") == 1 && !MiniGame.tutorialMode) { StartCoroutine(scanner()); }
-        if (PlayerPrefs.GetInt("Voice") == 0) { narration.Play(); }
+        if (PlayerPrefs.GetInt("voice") == 0) { narration.Play(); }
         directionalLight = GameObject.FindObjectOfType<Light>();
         //GameStatusEventHandler.gameWasStarted("challenge");
 
@@ -129,7 +194,7 @@ public class Abilities2 : MonoBehaviour
     }
     void narrationVoiceOverStop()
     {
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             if (incorrectVoiceOver.isPlaying)
                 incorrectVoiceOver.Stop();
@@ -203,9 +268,39 @@ public class Abilities2 : MonoBehaviour
                 loopCounts[loopCounts.Count - 1] = (int) loopsFromSlider;
 
         }
-        if (Input.anyKeyDown)
+        if (Input.GetKeyDown("1") == true)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
+            key1Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("2") == true)
+        {
+            key2Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("3") == true)
+        {
+            key3Press = true;
+            objectApp = true;
+        }
+        if (Input.GetKeyDown("space") == true)
+        {
+            keyspacePress = true;
+            objectApp = true;
+        }
+        if (e != null)
+        {
+            if (e.keyCode.ToString() == "10" && e.type == EventType.keyDown)
+            {
+                keyenterPress = true;
+                objectApp = true;
+            }
+        }
+
+        //Debug.Log(tutorialCount);
+        if (key1Press || key2Press || key3Press || keyspacePress || keyenterPress || objectApp) //Input.anyKeyDown)
+        {
+            //if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) return;
 
             if (winCanvas.active) { nextLevel(); }
             else if (tryAgainCanvas.active) { clearList(); }
@@ -213,6 +308,13 @@ public class Abilities2 : MonoBehaviour
             {
                 checkScanPosition();
             }
+
+            key1Press = false;
+            key2Press = false;
+            key3Press = false;
+            keyspacePress = false;
+            keyenterPress = false;
+            objectApp = false;
         }
 
         if (move.text.Contains("Forward"))
@@ -368,7 +470,7 @@ public class Abilities2 : MonoBehaviour
     IEnumerator playNarration()
     {
         yield return new WaitForSeconds(1.0f);
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
             narration.Play();
     }
 
@@ -484,7 +586,7 @@ public class Abilities2 : MonoBehaviour
 
     void playMoveName(string move)
     {
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             if (move.Contains("Grow")) { GetComponent<AudioSource>().clip = mySounds[5]; }
             if (move.Contains("Spin")) { GetComponent<AudioSource>().clip = mySounds[11]; }
@@ -649,15 +751,18 @@ public class Abilities2 : MonoBehaviour
 
         canvas.SetActive(false);
         winCanvas.SetActive(true);
-        GetComponent<AudioSource>().Stop();
-        GetComponent<AudioSource>().clip = winSound[UnityEngine.Random.Range(0, winSound.Length)];
-        GetComponent<AudioSource>().Play();
+        if (PlayerPrefs.GetInt("voice") == 0)
+        {
+            GetComponent<AudioSource>().Stop();
+            GetComponent<AudioSource>().clip = winSound[UnityEngine.Random.Range(0, winSound.Length)];
+            GetComponent<AudioSource>().Play();
+        }
         PointHandler.completedChallenges += 1.0f;
     }
     void displayErrorMessage()
     {
         //help.text = "Good try! Press Clear To Try Again";
-        //if (PlayerPrefs.GetInt("Voice") == 0)
+        //if (PlayerPrefs.GetInt("voice") == 0)
         //{
         //    incorrectVoiceOver.Play();
         //    if (narration.isPlaying)
@@ -677,7 +782,7 @@ public class Abilities2 : MonoBehaviour
 
     void playSound(int num)
     {
-        if (PlayerPrefs.GetInt("Voice") == 0)
+        if (PlayerPrefs.GetInt("voice") == 0)
         {
             narrationVoiceOverStop();
             GetComponent<AudioSource>().clip = mySounds[num];
