@@ -42,7 +42,7 @@ public class ChallenegeMenu : MonoBehaviour {
         SetAvatarName(currentAvatarNum);
 
         hintToggle.isOn = true;
-        ToggleHints();
+        //ToggleHints();
 
         if (returnFromChallenge)
             SetChallengeScreen();
@@ -248,6 +248,7 @@ public class ChallenegeMenu : MonoBehaviour {
 
     public void ChallengeBack()
     {
+        returnFromChallenge = false;
         characterSelectMenu.SetActive(false);
         //challengeMenu.alpha = 0f;
         challengeMenu.SetActive(false);

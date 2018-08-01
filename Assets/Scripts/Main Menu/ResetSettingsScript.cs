@@ -31,9 +31,9 @@ public class ResetSettingsScript : MonoBehaviour {
     }
 
 	public void OnClick() {
-        PlayerPrefs.DeleteAll();
+        //PlayerPrefs.DeleteAll();
 
-        PlayerPrefs.SetInt("firstTime", 1); //needed to prevent game from resetting PlayerPrefs again on restart; see: setPrefs.cs
+        //PlayerPrefs.SetInt("firstTime", 1); //needed to prevent game from resetting PlayerPrefs again on restart; see: setPrefs.cs
 
         highlightCheck.value = true;
 		typingCheck.value = false;
