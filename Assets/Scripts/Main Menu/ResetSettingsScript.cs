@@ -33,7 +33,7 @@ public class ResetSettingsScript : MonoBehaviour {
 	public void OnClick() {
         //PlayerPrefs.DeleteAll();
 
-        //PlayerPrefs.SetInt("firstTime", 1); //needed to prevent game from resetting PlayerPrefs again on restart; see: setPrefs.cs
+        PlayerPrefs.SetInt("firstTime", 1); //needed to prevent game from resetting PlayerPrefs again on restart; see: setPrefs.cs
 
         highlightCheck.value = true;
 		typingCheck.value = false;
@@ -47,7 +47,7 @@ public class ResetSettingsScript : MonoBehaviour {
         PlayerPrefs.SetInt("tutorialMiniGameStory", 0);
         PlayerPrefs.SetFloat("speedOfLabel", 1f);
         PlayerPrefs.SetFloat("printSize", 0.5f);
-        PlayerPrefs.SetFloat("scanSpeed", 0.5f);
+        PlayerPrefs.SetFloat("scanSpeed", 1.65f / 9.00f);
         PlayerPrefs.SetInt("MiniGameTutorial", 0);
         PlayerPrefs.SetInt("levelSelect", 0);
 
